@@ -1,0 +1,429 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudyBuddy</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef2f8;color:#182033}
+.app{max-width:760px;margin:auto;min-height:100vh;background:#fff}.top{height:64px;background:#3157d5;color:#fff;display:flex;align-items:center;padding:0 16px;gap:15px;position:sticky;top:0;z-index:20}
+.logo{font-size:21px;font-weight:800}.menu{width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none}.bars,.bars:before,.bars:after{content:"";display:block;width:24px;height:3px;background:#fff;border-radius:3px;position:relative}.bars:before{position:absolute;top:-8px}.bars:after{position:absolute;top:8px}
+.page{display:none;padding:20px 16px 70px}.page:target{display:block}#home{display:block}
+#home:target{display:block}#quiz:target,#study:target,#premium:target,#help:target,#settings:target{display:block}.hero{background:linear-gradient(135deg,#3157d5,#687df0);color:#fff;border-radius:20px;padding:22px;margin-bottom:18px}.hero h1{margin:0 0 6px}.hero p{margin:0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid #e1e6ef;border-radius:17px;padding:17px}.icon{font-size:30px}.card h3{margin:6px 0}.card p{color:#657089;font-size:14px;line-height:1.4}
+.btn{display:inline-block;text-decoration:none;border:0;border-radius:11px;padding:11px 15px;font-weight:700;background:#3157d5;color:#fff;cursor:pointer}.btn:disabled{opacity:.65;cursor:wait}.light{background:#edf1ff;color:#3157d5}.back{display:inline-block;color:#3157d5;text-decoration:none;font-weight:700;margin-bottom:12px}
+.drawer{position:fixed;inset:0;background:#0007;z-index:50;display:none}.drawer:target{display:block}.drawerbox{width:290px;max-width:82%;height:100%;background:#fff;padding:24px}.drawerbox h2{margin-top:0}.drawerbox a{display:block;text-decoration:none;color:#182033;padding:14px;border-radius:10px;margin:3px 0}.drawerbox a:hover{background:#f0f3fa}.close{font-size:25px;float:right;text-decoration:none;color:#182033}
+input,textarea{width:100%;padding:13px;border:1px solid #d7deea;border-radius:11px;font:inherit}textarea{min-height:130px}label{display:block;font-weight:700;margin:14px 0 7px}
+.note{background:#effaf3;border-left:4px solid #36a269;padding:13px;border-radius:8px;margin-top:15px}.premium{background:#fff0b2;border-radius:16px;padding:17px;margin-top:18px}
+.small{font-size:13px;color:#778096}.chat{background:#f5f7fb;border-radius:14px;padding:12px;margin:12px 0}.msg{padding:10px 12px;border-radius:12px;margin:7px 0}.ai{background:#fff}.me{background:#3157d5;color:#fff;margin-left:15%}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+
+
+.answer-wrap{margin:8px 0}
+.answer-wrap input{position:absolute;opacity:0;pointer-events:none}
+.answer-wrap label{display:block;width:100%;text-align:left;color:#182033;background:#f5f7fb;border:2px solid #e0e5ee;border-radius:12px;padding:12px;margin:0;font-weight:600;cursor:pointer}
+.answer-wrap input:checked + label{background:#ffc2c2;border-color:#d64545;color:#8a1f1f}
+.answer-wrap input.correct:checked + label{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+.answer-wrap:has(input:not(.correct):checked) .answer-correct{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+
+
+
+.answer-wrap input:disabled + label {
+  cursor: default;
+  opacity: 1;
+}
+.answer-wrap input.correct:disabled:checked + label {
+  background:#b9f2c8;
+  border-color:#2e9b55;
+  color:#145c2d;
+}
+.answer-wrap input.wrong:disabled:checked + label {
+  background:#ffc2c2;
+  border-color:#d64545;
+  color:#8a1f1f;
+}
+.answer-wrap:has(input:not(.correct):disabled:checked) .answer-correct {
+  background:#b9f2c8;
+  border-color:#2e9b55;
+  color:#145c2d;
+}
+
+
+/* Lock a question immediately after its first answer is selected. */
+.answer-wrap:has(input[type="radio"]:checked) label {
+  pointer-events: none;
+  cursor: default;
+}
+.answer-wrap input[type="radio"]:checked + label {
+  pointer-events: none;
+}
+.answer-wrap input[type="radio"]:disabled + label {
+  opacity: 1;
+  cursor: default;
+}
+
+
+/* Permanent answer lock: once an answer is selected, that question cannot be changed. */
+.quizq:has(input[type="radio"]:checked) .answer-wrap label {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+.quizq input[type="radio"]:checked + label {
+  pointer-events: none !important;
+}
+.quizq input[type="radio"]:checked + label {
+  opacity: 1;
+}
+.quizq input[type="radio"].correct:checked + label {
+  background: #b9f2c8;
+  border-color: #2e9b55;
+  color: #145c2d;
+}
+.quizq input[type="radio"].wrong:checked + label {
+  background: #ffc2c2;
+  border-color: #d64545;
+  color: #8a1f1f;
+}
+.quizq:has(input[type="radio"].wrong:checked) .answer-correct {
+  background: #b9f2c8;
+  border-color: #2e9b55;
+  color: #145c2d;
+}
+
+
+.ai-question{margin:22px 0;padding:16px;border:2px solid #e0e5ee;border-radius:16px}
+.ai-question-title{font-size:18px;line-height:1.35;margin-bottom:12px}
+.ai-answer-wrap{margin:8px 0}
+.ai-answer-wrap input{position:absolute;opacity:0;pointer-events:none}
+.ai-answer-wrap label{display:block;text-align:left;color:#182033;background:#f5f7fb;border:2px solid #e0e5ee;border-radius:12px;padding:12px;font-weight:600;cursor:pointer}
+.ai-question:has(input:checked) .ai-answer-wrap label{pointer-events:none;cursor:default}
+.ai-answer-wrap input:checked + label{background:#ffc2c2;border-color:#d64545;color:#8a1f1f}
+.ai-answer-wrap input.correct:checked + label{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+.ai-question:has(input.wrong:checked) .ai-answer-wrap .ai-correct{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+.ai-explanation{margin-top:10px;padding:10px;border-radius:10px;background:#f5f7fb;color:#4b5870}
+
+</style>
+
+<style>
+.answer-wrap{margin:8px 0}
+.answer-wrap input{position:absolute;opacity:0;width:1px;height:1px}
+.answer-wrap label{display:block;width:100%;text-align:left;color:#182033;background:#f5f7fb;border:2px solid #e0e5ee;border-radius:12px;padding:12px;margin:0;font-weight:600}
+.answer-wrap input:checked + label{background:#ffc2c2;border-color:#d64545;color:#8a1f1f}
+.answer-wrap input.correct:checked + label{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+.answer-wrap:has(input.wrong:checked) .answer-correct{background:#b9f2c8;border-color:#2e9b55;color:#145c2d}
+
+.answer-wrap input:disabled + label {
+  cursor: default;
+  opacity: 1;
+}
+.answer-wrap input.correct:disabled:checked + label {
+  background:#b9f2c8;
+  border-color:#2e9b55;
+  color:#145c2d;
+}
+.answer-wrap input.wrong:disabled:checked + label {
+  background:#ffc2c2;
+  border-color:#d64545;
+  color:#8a1f1f;
+}
+.answer-wrap:has(input:not(.correct):disabled:checked) .answer-correct {
+  background:#b9f2c8;
+  border-color:#2e9b55;
+  color:#145c2d;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><a class="menu" href="#drawer">☰</a><div class="logo">StudyBuddy</div></header>
+
+<div id="home" class="page homeDefault">
+<div class="hero"><h1>Learn smarter.</h1><p>Quizzes, study guides, homework help, and more.</p></div>
+<div class="grid">
+<div class="card"><div class="icon">📝</div><h3>Quiz Maker</h3><p>Create practice quizzes from a topic.</p><a class="btn" href="#quiz">Make a quiz</a></div>
+<div class="card"><div class="icon">📚</div><h3>Study Guide</h3><p>Turn notes or homework into a study guide.</p><a class="btn" href="#study">Study</a></div>
+<div class="card"><div class="icon">⭐</div><h3>Premium</h3><p>Unlock the AI Study Chat for $2/month.</p><a class="btn light" href="#premium">Buy Premium</a></div>
+<div class="card"><div class="icon">❓</div><h3>Help</h3><p>Learn how each part of StudyBuddy works.</p><a class="btn light" href="#help">Open Help</a></div>
+</div>
+</div>
+
+<div id="quiz" class="page">
+<a class="back" href="#home">Back to Home</a>
+<h2>AI Quiz Maker</h2>
+<p class="small">Type any topic and the AI will create a quiz about it.</p>
+
+<form id="aiQuizForm" onsubmit="return false;" novalidate>
+  <label for="aiTopic">What should the quiz be about?</label>
+  <input id="aiTopic" name="topic" placeholder="Example: George Washington" required>
+
+  <label for="aiCount" style="display:block;margin-top:12px">Number of questions</label>
+  <select id="aiCount" name="count">
+    <option value="5">5 questions</option>
+    <option value="10">10 questions</option>
+  </select>
+
+  <button id="generateAIQuiz" class="btn" type="button" style="margin-top:15px">Generate AI Quiz</button>
+</form>
+
+<div id="aiQuizStatus" class="note" style="display:none"></div>
+<div id="aiQuizResult"></div>
+</div>
+
+<div id="study" class="page"><a class="back" href="#home">Back to Home</a><h2>Study Guide</h2><p class="small">Paste notes, a book passage, or homework below.</p><label>Your text</label><textarea placeholder="Paste your notes or homework here..."></textarea><label>Scan a page</label><input type="file" accept="image/*"><div class="note"><b>Study guide scanner ready.</b><br>A production version would use OCR to read the photo and AI to explain it.</div></div>
+
+<div id="premium" class="page"><a class="back" href="#home">Back to Home</a><h2>StudyBuddy Premium</h2><div class="premium"><h3>$2/month</h3><p>Unlock AI Study Chat, advanced quiz generation, detailed homework explanations, and future premium tools.</p><a class="btn" href="#premium">Upgrade for $2/month</a></div><h3>AI Study Chat</h3><div class="chat"><div class="msg ai">Hi! Ask me how to study, how to understand a homework question, or how to prepare for a test.</div></div><input placeholder="Ask your study question..."></div>
+
+<div id="help" class="page"><a class="back" href="#home">Back to Home</a><h2>Help</h2><h3>Quiz Maker</h3><p>Choose Quiz Maker and enter what you want to study.</p><h3>Study Guide</h3><p>Paste notes or scan a page to turn it into an easier study guide.</p><h3>Premium</h3><p>Premium costs $2/month and adds the AI Study Chat and advanced study tools.</p><h3>Menu</h3><p>Tap the ☰ button at the top-left to open the app menu.</p></div>
+
+<div id="settings" class="page"><a class="back" href="#home">Back to Home</a><h2>Settings</h2><p><b>Version:</b> 1.0.0</p><p>StudyBuddy is designed for students and teachers.</p></div>
+
+<div id="drawer" class="drawer">
+<div class="drawerbox">
+<a class="close" href="#home">×</a><h2>StudyBuddy</h2>
+<a href="#home">Home</a>
+<a href="#quiz">Quiz Maker</a>
+<a href="#study">Study Guide</a>
+<a href="#premium">Buy Premium - $2/month</a>
+<a href="#help">Help</a>
+<a href="#settings">Settings</a>
+<hr><p class="small">StudyBuddy v1.0.0</p>
+</div>
+</div>
+</div>
+
+
+<script>
+(function(){
+  const banks = {
+    washington: {
+      title: "George Washington Quiz",
+      questions: [
+        ["What number president of the United States was George Washington?", ["Second","First","Fifth","Tenth"], 1],
+        ["George Washington served as president during which years?", ["1776–1780","1789–1797","1801–1809","1812–1816"], 1],
+        ["Washington was a leading American commander during which war?", ["Civil War","American Revolutionary War","War of 1812","Mexican-American War"], 1],
+        ["What was Washington's home in Virginia called?", ["Mount Vernon","Monticello","Montpelier","Montauk"], 0],
+        ["How many terms did Washington serve as U.S. president?", ["One","Two","Three","Four"], 1]
+      ]
+    },
+    nineeleven: {
+      title: "September 11, 2001 Quiz",
+      questions: [
+        ["On what date did the September 11 attacks occur?", ["September 11, 2001","September 11, 1999","October 11, 2001","September 1, 2001"], 0],
+        ["Which city was home to the World Trade Center complex?", ["Boston","New York City","Chicago","Philadelphia"], 1],
+        ["The attacks involved the hijacking of how many commercial passenger airplanes?", ["Two","Three","Four","Five"], 2],
+        ["The Pentagon is located in which U.S. state?", ["Virginia","New York","Maryland","Pennsylvania"], 0],
+        ["Flight 93 crashed in which U.S. state?", ["Ohio","Pennsylvania","Virginia","New Jersey"], 1]
+      ]
+    },
+    science: {
+      title: "Science Quiz",
+      questions: [
+        ["What process do plants use to make food using light?", ["Respiration","Photosynthesis","Digestion","Evaporation"], 1],
+        ["Which gas do humans need for cellular respiration?", ["Carbon dioxide","Helium","Oxygen","Hydrogen"], 2],
+        ["What is H2O commonly called?", ["Salt","Oxygen","Water","Hydrogen"], 2],
+        ["What force pulls objects toward Earth?", ["Magnetism","Gravity","Friction","Electricity"], 1],
+        ["What organ pumps blood around the body?", ["Lungs","Brain","Heart","Stomach"], 2]
+      ]
+    },
+    math: {
+      title: "Math Quiz",
+      questions: [
+        ["What is 12 × 8?", ["84","96","108","88"], 1],
+        ["What is 3/4 as a decimal?", ["0.25","0.50","0.75","1.25"], 2],
+        ["Solve: 2x + 6 = 14.", ["x = 2","x = 4","x = 6","x = 10"], 1],
+        ["What is 15 + 27?", ["32","40","42","52"], 2],
+        ["What is 100 ÷ 4?", ["20","25","30","40"], 1]
+      ]
+    },
+    history: {
+      title: "History Quiz",
+      questions: [
+        ["Which document declared the American colonies independent from Britain?", ["Magna Carta","Declaration of Independence","Constitution","Treaty of Paris"], 1],
+        ["Who was the first U.S. president?", ["Abraham Lincoln","George Washington","Thomas Jefferson","John Adams"], 1],
+        ["Ancient Egypt developed along which river?", ["Nile","Amazon","Mississippi","Danube"], 0],
+        ["The Roman Empire was centered around which city?", ["Athens","Rome","Sparta","Carthage"], 1],
+        ["The pyramids of Giza are located in which country?", ["Greece","Egypt","Italy","Mexico"], 1]
+      ]
+    },
+    english: {
+      title: "English Quiz",
+      questions: [
+        ["What is a noun?", ["An action word","A describing word","A person, place, thing, or idea","A punctuation mark"], 2],
+        ["What is a synonym for happy?", ["Angry","Joyful","Tired","Quiet"], 1],
+        ["What is a verb?", ["An action or state word","A person","A place","A punctuation mark"], 0],
+        ["What punctuation usually ends a question?", [".","!","?",","], 2],
+        ["What is the main idea of a passage?", ["A minor detail","The central point","The title only","A single word"], 1]
+      ]
+    }
+  };
+
+  function keyForTopic(topic){
+    const t=topic.toLowerCase().trim().replace(/[’']/g,"");
+    if(t.includes("george washington") || t.includes("washington")) return "washington";
+    if(t.includes("9/11") || t.includes("911") || t.includes("september 11")) return "nineeleven";
+    if(t.includes("science") || t.includes("biology") || t.includes("chemistry") || t.includes("physics")) return "science";
+    if(t.includes("math") || t.includes("algebra") || t.includes("geometry") || t.includes("fractions")) return "math";
+    if(t.includes("history") || t.includes("government") || t.includes("american revolution")) return "history";
+    if(t.includes("english") || t.includes("grammar") || t.includes("reading")) return "english";
+    return null;
+  }
+
+  function escapeHTML(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderQuiz(bank, topic){
+    const out=document.getElementById("topicQuizOutput");
+    const msg=document.getElementById("topicQuizMessage");
+    msg.style.display="none";
+    let html='<div class="card" style="margin-top:18px"><h3>'+escapeHTML(bank.title)+'</h3><p class="small">Tap one answer for each question. Once you answer, that question is locked.</p>';
+    bank.questions.forEach((q,i)=>{
+      const name="generated_"+Date.now()+"_"+i;
+      html+='<div class="quizq"><b>'+(i+1)+'. '+escapeHTML(q[0])+'</b>';
+      q[1].forEach((choice,j)=>{
+        const id=name+"_"+j;
+        const cls=j===q[2]?"correct":"wrong";
+        const correctClass=j===q[2]?" answer-correct":"";
+        html+='<div class="answer-wrap"><input type="radio" id="'+id+'" name="'+name+'" class="'+cls+'"><label for="'+id+'" class="'+correctClass+'">'+String.fromCharCode(65+j)+'. '+escapeHTML(choice)+'</label></div>';
+      });
+      html+='</div>';
+    });
+    html+='<a class="btn light" href="#quiz">Back to Quiz Maker</a></div>';
+    out.innerHTML=html;
+    out.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function generate(){
+    const input=document.getElementById("topicBox");
+    const topic=input.value.trim();
+    const msg=document.getElementById("topicQuizMessage");
+    if(!topic){
+      msg.textContent="Type a topic first, such as George Washington or 9/11.";
+      msg.style.display="block";
+      return;
+    }
+    const key=keyForTopic(topic);
+    if(!key){
+      msg.innerHTML="<b>I don't have a quiz for that topic in this offline prototype yet.</b><br>Try George Washington, 9/11, Science, Math, History, or English. The full AI version can generate questions for any topic.";
+      msg.style.display="block";
+      document.getElementById("topicQuizOutput").innerHTML="";
+      return;
+    }
+    renderQuiz(banks[key],topic);
+  }
+
+  const button=document.getElementById("generateTopicQuiz");
+  if(button) button.addEventListener("click",generate);
+})();
+</script>
+
+
+<script>
+(function () {
+  function initAIQuiz() {
+    var form = document.getElementById("aiQuizForm");
+    var button = document.getElementById("generateAIQuiz");
+    var status = document.getElementById("aiQuizStatus");
+    var result = document.getElementById("aiQuizResult");
+    var topicInput = document.getElementById("aiTopic");
+    var countInput = document.getElementById("aiCount");
+
+    if (!form || !button || !status || !result || !topicInput || !countInput) return;
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, function (c) {
+        return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+      });
+    }
+
+    async function generateAIQuiz(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      var topic = topicInput.value.trim();
+      var count = parseInt(countInput.value, 10) || 5;
+
+      if (!topic) {
+        status.style.display = "block";
+        status.textContent = "Please type a topic first.";
+        topicInput.focus();
+        return false;
+      }
+
+      button.disabled = true;
+      button.textContent = "Creating quiz...";
+      status.style.display = "block";
+      status.textContent = "Creating your quiz about " + topic + "...";
+      result.innerHTML = "";
+
+      try {
+        var response = await fetch("/api/generate-quiz", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ topic: topic, count: count })
+        });
+
+        var text = await response.text();
+        var data;
+        try { data = JSON.parse(text); }
+        catch (_) { throw new Error("The StudyBuddy server did not return a valid response. Make sure you are using the deployed StudyBuddy website."); }
+
+        if (!response.ok) {
+          throw new Error(data.error || "The AI could not create the quiz.");
+        }
+
+        if (!data.quiz || !Array.isArray(data.quiz.questions)) {
+          throw new Error("The server returned an incomplete quiz.");
+        }
+
+        status.style.display = "none";
+        var quiz = data.quiz;
+        var html = "<h3>" + esc(quiz.title || ("Quiz about " + topic)) + "</h3>";
+        html += "<p class='small'>Answer each question once. After you choose an answer, that question is locked.</p>";
+
+        quiz.questions.forEach(function (q, i) {
+          html += "<div class='ai-question'>";
+          html += "<div class='ai-question-title'><b>" + (i + 1) + ". " + esc(q.question) + "</b></div>";
+          (q.answers || []).forEach(function (answer, j) {
+            var id = "ai_" + i + "_" + j;
+            var cls = j === Number(q.correctIndex) ? "correct" : "wrong";
+            var correctClass = j === Number(q.correctIndex) ? " ai-correct" : "";
+            html += "<div class='ai-answer-wrap'>";
+            html += "<input type='radio' id='" + id + "' name='aiq" + i + "' class='" + cls + "'>";
+            html += "<label for='" + id + "' class='" + correctClass + "'>" + String.fromCharCode(65 + j) + ". " + esc(answer) + "</label>";
+            html += "</div>";
+          });
+          html += "<div class='ai-explanation'><b>Explanation:</b> " + esc(q.explanation || "") + "</div>";
+          html += "</div>";
+        });
+
+        result.innerHTML = html;
+        result.scrollIntoView({behavior:"smooth", block:"start"});
+      } catch (err) {
+        status.style.display = "block";
+        status.innerHTML = "<b>Generate Quiz couldn't connect.</b><br>" + esc(err.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = "Generate AI Quiz";
+      }
+
+      return false;
+    }
+
+    button.addEventListener("click", generateAIQuiz, false);
+    form.addEventListener("submit", generateAIQuiz, false);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAIQuiz);
+  } else {
+    initAIQuiz();
+  }
+})();
+</script>
+
+</body>
+</html>
